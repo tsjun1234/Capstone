@@ -58,20 +58,21 @@ public class HTMLModule {
 	}
 	
 	//파일에 저장된 태그들을 불러와 그림판에 그림
-	public void loadHTML() {
-		
+	public void loadHTML(FileModule fileModule) {
+		String []tmp=fileModule.LoadFile();
 	}
 	
 	//현재까지의 태그들을 파일에 저장함
-	public String getHTMLTags() {
-		String result="";
+	public String[] getHTMLTags() {
+		String []tmp=new String[2];
+		tmp[0]=tmp[1]="";
 		for(int i=0;i<headTag.size();i++) {
-			result=result+headTag.get(i).getTag();
+			tmp[0]=tmp[0]+headTag.get(i).getTag();
 		}
 		for(int i=0;i<bodyTag.size();i++) {
-			result=result+bodyTag.get(i).getTag();
+			tmp[1]=tmp[1]+bodyTag.get(i).getTag();
 		}
-		return result;
+		return tmp;
 	}
 	
 	//캔버스 역할을 할 패널
@@ -189,6 +190,7 @@ public class HTMLModule {
 		}
 
 }
+
 //파일에 저장될 태그를 클래스화
 class TagObject{
 	String tag;
@@ -198,6 +200,9 @@ class TagObject{
 	TagObject(){
 		this("<div>",0,0,"");
 	}
+	TagObject(String tagString){
+		
+	}
 	TagObject(String tag, int x, int y, String tagOption){
 		this.tag=tag;
 		this.x=x;
@@ -206,12 +211,18 @@ class TagObject{
 	}
 	void makeTag() {
 		String tmp=tag.substring(1,tag.length()-1);
-		result="<"+tmp+" "+tagOption+">"+"</"+tmp+">";
+		if(tagOption!="")
+			result="<"+tmp+" "+tagOption+">"+"</"+tmp+">";
+		else
+			result="<"+tmp+"></"+tmp+">";
 	}
-	String getTag() {return result;}
+	String getTag() {
+		makeTag();
+		return result;
+	}
 }
 
-//태그 대화상자를 정의함
+//태그 목록 대화상자를 정의함
 class TagsDialog extends JDialog{
 	//대화상자를 만들고 해당하는 태그 목록만큼 버튼을 생성
 	//버튼을 클릭시 어떤 태그를 선택했는지 HTML모듈의 selected에 저장 후 종료

@@ -82,8 +82,9 @@ public class App extends JFrame {
 			}
 			//파일을 읽어들일 때 사용하는 함수
 			if(type.equals(MenuItems.get(1))) {
+				makeNewTask();
 				htmlModule.makeNewHTML(frame, mainPanel);
-				htmlModule.loadHTML();
+				htmlModule.loadHTML(fileModule);
 			}
 			//파일을 저장할 때 사용하는 함수
 			if(type.equals(MenuItems.get(2))) {
