@@ -144,8 +144,15 @@ public class FileModule{
 		String name=file.getName();
 		if(!flag) {
 			int extval=file.getName().lastIndexOf(".");
-			extenstion=file.getName().substring(extval+1);
-			name=name.substring(0,extval);
+			//확장자가 있다면 확장자를 추출
+			if(extval!=-1) {
+				extenstion=file.getName().substring(extval+1);
+				name=name.substring(0,extval);
+			}
+			//확장자가 없다면 설정된 기본 확장자로 변경(html)
+			else {
+				extenstion=ext;
+			}
 		}
 		//확장자가 html, css, js가 아님, 경고창 출력
 		if(!((extenstion.equals(fileFilters[0][1]))||(extenstion.equals(fileFilters[1][1]))||(extenstion.equals(fileFilters[2][1])))) {

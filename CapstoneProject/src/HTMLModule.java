@@ -8,7 +8,9 @@ public class HTMLModule {
 	HTMLModule module=this;
 	JFrame frame;
 	JPanel mainPanel;
-	String selected = "";
+	String selectedTag = "";
+	String attribute="";
+	String content="";
 	HashMap<String, String[]> tags=new HashMap<String,String[]>();
 	Vector<TagObject> headTag=new Vector<TagObject>();
 	Vector<TagObject> bodyTag=new Vector<TagObject>();
@@ -21,6 +23,8 @@ public class HTMLModule {
 		mainPanel.removeAll();
 		this.frame=frame;
 		this.mainPanel=mainPanel;
+		makeTagMap();
+		
 		createHTMLInterface();
 	}
 	
@@ -45,7 +49,6 @@ public class HTMLModule {
 			toolsButtons[i].addActionListener(toolListener);
 			tools.add(toolsButtons[i]);
 		}
-		makeTagMap();
 		
 		//그림판 설정
 		JScrollPane scrollPane=new JScrollPane(objects, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -100,12 +103,11 @@ public class HTMLModule {
 				Point p=e.getPoint();
 				End.add(p);
 				//태그가 선택되어있는 경우에만 bodyTag에 추가
-				if(selected.charAt(0)=='<') {
-					bodyTag.add(new TagObject(selected,p.x,p.y,""));
+				if(selectedTag.charAt(0)=='<') {
+					bodyTag.add(new TagObject(selectedTag,p.x,p.y,"",""));
 				}
 				//현재까지의 bodyTag내용 출력(디버깅)
 				for(int i=0;i<bodyTag.size();i++) {
-					bodyTag.get(i).makeTag();
 					System.out.println(bodyTag.get(i).getTag());
 				}
 				Canvas.repaint();
@@ -154,8 +156,11 @@ public class HTMLModule {
 	class ToolActionListener implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			String type=e.getActionCommand();
-			TagsDialog dialog=new TagsDialog(application.frame,type+"태그",tags.get(type), module);
-			dialog.setVisible(true);
+			new TagsDialog(application.frame,type+"태그 목록",tags.get(type), module);
+			//헤드 태그의 경우 위치 지정이 필요없으므로 바로 태그목록에 추가
+			if(type.equals("Head")) {
+				headTag.add(new TagObject(selectedTag, attribute, content));
+			}
 		}
 	}
 	
@@ -187,8 +192,7 @@ public class HTMLModule {
 			tags.put("Semantic", Semantic);
 			String[]Free= {};
 			tags.put("Free", Free);
-		}
-
+	}
 }
 
 //파일에 저장될 태그를 클래스화
@@ -197,51 +201,186 @@ class TagObject{
 	int x, y;
 	String tagOption;
 	String result;
+	String content;
+	TagObject Parent;
+	TagObject[]childerens;
+	//클래스 생성자
 	TagObject(){
-		this("<div>",0,0,"");
+		this("<div>",0,0,"","");
 	}
-	TagObject(String tagString){
-		
+	TagObject(String tag, String tagOption, String content){
+		this(tag, 0, 0, tagOption, content);
 	}
-	TagObject(String tag, int x, int y, String tagOption){
+	TagObject(String tag, int x, int y, String tagOption, String content){
 		this.tag=tag;
 		this.x=x;
 		this.y=y;
 		this.tagOption=tagOption;
+		this.content=content;
 	}
-	void makeTag() {
+	//클래스에 저장되어 있는 태그값을 기초로 값을 반환함
+	String getTag() {
 		String tmp=tag.substring(1,tag.length()-1);
 		if(tagOption!="")
-			result="<"+tmp+" "+tagOption+">"+"</"+tmp+">";
+			result="<"+tmp+" "+tagOption+">"+content+"</"+tmp+">";
 		else
 			result="<"+tmp+"></"+tmp+">";
-	}
-	String getTag() {
-		makeTag();
 		return result;
 	}
 }
 
 //태그 목록 대화상자를 정의함
 class TagsDialog extends JDialog{
+	HashMap<String, String[]> attributes=new HashMap<String, String[]>();
 	//대화상자를 만들고 해당하는 태그 목록만큼 버튼을 생성
-	//버튼을 클릭시 어떤 태그를 선택했는지 HTML모듈의 selected에 저장 후 종료
+	//버튼을 클릭시 어떤 태그를 선택했는지 HTML모듈의 selectedTag에 저장 후 종료
 	public TagsDialog(JFrame frame, String title, String[] list, HTMLModule module) {
 		super(frame,title, true);
 		int length=list.length;
 		setLayout(new GridLayout(((length-5<=0)?1:length/5+1), 5));
 		setBounds(20,100,800,200);
+		makeAttributeMap();
+		//목록들에 대한 버튼을 만들고 액션리스너를 추가
 		JButton[]buttons=new JButton[list.length];
 		for(int i=0;i<length;i++) {
 			buttons[i]=new JButton(list[i]);
 			buttons[i].addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					module.selected=e.getActionCommand();
+					String tmp=e.getActionCommand();
+					module.selectedTag=tmp;
+					//속성 대화상자 출력 후 속성값을 저장
+					new SelectAttributeDialog(frame, tmp+"속성 설정", attributes.get(tmp), module);
+					//취소가 선택되었다면 다시 태그선택
+					if(module.attribute.equals("cancel")) {
+						return;
+					}
+					//몇몇 태그의 경우 내용이 필요없으므로 head태그가 아닌경우에만 내용입력창 출력
+					if(tmp.equals("<br>")||tmp.equals("<img>")||tmp.equals("<meta>")||tmp.equals("<link>")||tmp.equals("<input>")||tmp.equals("<hr>")) {
+						dispose();
+						return;
+					}
+					//내용 대화상자 출력 후 내용을 저장
+					new ContentDialog(frame,"내용 입력",module);
+					//취소가 되었다면 종료
+					if(module.content.equals("cancel")) {
+						return;
+					}
 					dispose();
 				}
 			});
 			add(buttons[i]);
 		}
+		pack();
+		setVisible(true);
+	}
+	//속성사전을 만드는 함수
+	void makeAttributeMap() {
+		String[]meta= {"charset","content","http-equiv","name"};
+		attributes.put("<meta>", meta);
+		String[]title= {};
+		attributes.put("<title>", title);
+	}
+}
+
+//속성 선택
+class SelectAttributeDialog extends JDialog{
+	public SelectAttributeDialog(JFrame frame, String title, String[] list, HTMLModule module) {
+		super(frame,title, true);
+		setBounds(20,100,300,150);
+		
+		//속성 선택 리스트 패널
+		JPanel comboPanel=new JPanel();
+		comboPanel.setLayout(new FlowLayout());
+		JLabel label=new JLabel(title,JLabel.CENTER);
+		JComboBox<String>attributeBox=new JComboBox<String>(list);
+		attributeBox.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+		comboPanel.add(label);
+		comboPanel.add(attributeBox);
+		
+		//속성값을 입력받고 현재까지의 속성값을 출력하는 패널
+		JPanel textPanel=new JPanel();
+		final JTextField text=new JTextField("여기에 속성 값 입력");
+		text.setSize(50, 20);
+		JLabel now=new JLabel("");
+		now.setHorizontalAlignment(JLabel.CENTER);
+		textPanel.setLayout(new BorderLayout());
+		textPanel.add(text, BorderLayout.NORTH);
+		textPanel.add(now, BorderLayout.SOUTH);
+		
+		//동작을 구현할 버튼이 있는 패널
+		JPanel buttonPanel=new JPanel();
+		JButton addButton=new JButton("추가");
+		JButton endButton=new JButton("확인");
+		JButton cancelButton=new JButton("취소");
+		addButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				now.setText(now.getText()+" "+attributeBox.getSelectedItem()+"=\""+text.getText()+"\"");
+			}
+		});
+		endButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				module.attribute=now.getText();
+				dispose();
+			}
+		});
+		cancelButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				module.attribute="cancel";
+				dispose();
+			}
+		});
+		buttonPanel.add(addButton);
+		buttonPanel.add(endButton);
+		buttonPanel.add(cancelButton);
+		
+		setLayout(new BorderLayout());
+		add(comboPanel, BorderLayout.NORTH);
+		add(textPanel, BorderLayout.CENTER);
+		add(buttonPanel, BorderLayout.SOUTH);
+		setVisible(true);
+		pack();
+	}
+	
+}
+
+//내용 입력
+class ContentDialog extends JDialog{
+	public ContentDialog(JFrame frame, String title, HTMLModule module) {
+		super(frame,title, true);
+		setBounds(20,100,300,150);
+		//안내패널
+		JPanel labelPanel=new JPanel();
+		JLabel label=new JLabel("내용 입력");
+		labelPanel.add(label);
+		
+		//내용을 입력받을 필드
+		final JTextField text=new JTextField("여기에 내용 입력");
+		text.setSize(20, 10);
+		
+		//실제 동작을 수행할 패널
+		JPanel buttonPanel=new JPanel();
+		JButton addButton=new JButton("확인");
+		JButton cancelButton=new JButton("취소");
+		addButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				module.content=text.getText();
+			}
+		});
+		cancelButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				module.content="cancel";
+				dispose();
+			}
+		});
+		buttonPanel.add(addButton);
+		buttonPanel.add(cancelButton);
+		
+		setLayout(new BorderLayout());
+		add(labelPanel, BorderLayout.NORTH);
+		add(text, BorderLayout.CENTER);
+		add(buttonPanel, BorderLayout.SOUTH);
+		
+		setVisible(true);
 		pack();
 	}
 }
