@@ -104,7 +104,7 @@ public class HTMLModule {
 				End.add(p);
 				//태그가 선택되어있는 경우에만 bodyTag에 추가
 				if(selectedTag.charAt(0)=='<') {
-					bodyTag.add(new TagObject(selectedTag,p.x,p.y,"",""));
+					bodyTag.add(new TagObject(selectedTag,p.x,p.y,attribute,content));
 				}
 				//현재까지의 bodyTag내용 출력(디버깅)
 				for(int i=0;i<bodyTag.size();i++) {
@@ -156,7 +156,7 @@ public class HTMLModule {
 	class ToolActionListener implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			String type=e.getActionCommand();
-			new TagsDialog(application.frame,type+"태그 목록",tags.get(type), module);
+			new TagsDialog(application.frame,type,tags.get(type), module);
 			//헤드 태그의 경우 위치 지정이 필요없으므로 바로 태그목록에 추가
 			if(type.equals("Head")) {
 				headTag.add(new TagObject(selectedTag, attribute, content));
@@ -168,9 +168,9 @@ public class HTMLModule {
 	void makeTagMap() {
 			String[]Head= {"<meta>","<title>","<link>","<style>","<script>"};
 			tags.put("Head", Head);
-			String[]Text= {"<hgroup>","<h1>","<h2>","<h3>","<h4>","<h5>","<h6>","<p>","<b>","<i>"
-					,"<strong>","<strike>","<mark>","<em>","<ins>","<del>","<s>","<u>","<sup>","<sub>","<small>","<br>","<hr>","<abbr>","<wbr>","<blockquote>","<q>"
-					,"<dfn>","<pre>","<var>","<samp>","<kbd>","<code>","<ruby>","<rp>","<rt>","<rb>","<rtc>"};
+			String[]Text= {"<h1>","<h2>","<h3>","<h4>","<h5>","<h6>","<p>","<b>","<i>"
+					,"<strong>","<mark>","<em>","<ins>","<del>","<s>","<u>","<sup>","<sub>","<small>","<br>","<hr>","<abbr>","<wbr>","<blockquote>","<q>"
+					,"<dfn>","<pre>","<var>","<samp>","<kbd>","<code>","<ruby>","<rp>","<rt>"};
 			tags.put("Text", Text);
 			String[]List= {"<ul>","<li>","<ol>","<dl>","<dt>","<dd>","<menu>"};
 			tags.put("List", List);
@@ -192,6 +192,12 @@ public class HTMLModule {
 			tags.put("Semantic", Semantic);
 			String[]Free= {};
 			tags.put("Free", Free);
+			Set<String> keys=tags.keySet();
+			Iterator<String> it=keys.iterator();
+			while(it.hasNext()) {
+				String key=it.next();
+				Arrays.sort(tags.get(key));
+			}
 	}
 }
 
@@ -224,14 +230,17 @@ class TagObject{
 		if(tagOption!="")
 			result="<"+tmp+" "+tagOption+">"+content+"</"+tmp+">";
 		else
-			result="<"+tmp+"></"+tmp+">";
+			result="<"+tmp+">"+content+"</"+tmp+">";
 		return result;
 	}
 }
 
 //태그 목록 대화상자를 정의함
 class TagsDialog extends JDialog{
+	//전역 속성
+	String[]Global= {"accesskey","class","contenteditable","data-*","dir","draggable","hidden","id","lang","spellcheck","style","tabindex","title","translate"};
 	HashMap<String, String[]> attributes=new HashMap<String, String[]>();
+	
 	//대화상자를 만들고 해당하는 태그 목록만큼 버튼을 생성
 	//버튼을 클릭시 어떤 태그를 선택했는지 HTML모듈의 selectedTag에 저장 후 종료
 	public TagsDialog(JFrame frame, String title, String[] list, HTMLModule module) {
@@ -239,7 +248,8 @@ class TagsDialog extends JDialog{
 		int length=list.length;
 		setLayout(new GridLayout(((length-5<=0)?1:length/5+1), 5));
 		setBounds(20,100,800,200);
-		makeAttributeMap();
+		makeAttributeMap(title, list);
+		title=title+"태그 목록";
 		//목록들에 대한 버튼을 만들고 액션리스너를 추가
 		JButton[]buttons=new JButton[list.length];
 		for(int i=0;i<length;i++) {
@@ -248,13 +258,13 @@ class TagsDialog extends JDialog{
 				public void actionPerformed(ActionEvent e) {
 					String tmp=e.getActionCommand();
 					module.selectedTag=tmp;
-					//속성 대화상자 출력 후 속성값을 저장
-					new SelectAttributeDialog(frame, tmp+"속성 설정", attributes.get(tmp), module);
+					//속성선택창 출력
+					new SelectAttributeDialog(frame, tmp+"속성 설정", concat(Global,attributes.get(tmp)), module);
 					//취소가 선택되었다면 다시 태그선택
 					if(module.attribute.equals("cancel")) {
 						return;
 					}
-					//몇몇 태그의 경우 내용이 필요없으므로 head태그가 아닌경우에만 내용입력창 출력
+					//몇몇 태그의 경우 내용이 필요없으므로 아닌경우에만 내용입력창 출력
 					if(tmp.equals("<br>")||tmp.equals("<img>")||tmp.equals("<meta>")||tmp.equals("<link>")||tmp.equals("<input>")||tmp.equals("<hr>")) {
 						dispose();
 						return;
@@ -274,11 +284,59 @@ class TagsDialog extends JDialog{
 		setVisible(true);
 	}
 	//속성사전을 만드는 함수
-	void makeAttributeMap() {
-		String[]meta= {"charset","content","http-equiv","name"};
-		attributes.put("<meta>", meta);
-		String[]title= {};
-		attributes.put("<title>", title);
+	void makeAttributeMap(String category, String[] tagList) {
+		for(int i=0;i<tagList.length;i++) {
+			System.out.println(tagList[i]);
+		}
+		//이벤트 속성
+		String[]empty= {};
+		String[]Event= {"onafterprint","onbeforeprint","onbeforeunload","onerror","onhashchange","onload","onmessage","onoffline","ononline"
+				,"onpagehide","onpageshow","onpopstate","onresize","onstorage","onunload"};
+		switch(category) {
+		case "Head":
+			//헤드 태그 속성
+			String[]meta= {"charset","content","http-equiv","name"};
+			attributes.put("<meta>", meta);
+			String[]title= {};
+			attributes.put("<title>", title);
+			String[]link= {"crossorigin","href","hreflang","media","referrerpolicy","rel","sizes","title","type"};
+			link=concat(Event, link);
+			attributes.put("<link>", link);
+			String[]style= {"media","type"};
+			style=concat(Event, style);
+			attributes.put("<style>", style);
+			String[]script={"async","crossorigin","defer","integrity","nomodule","referrerpolicy","src","type"};
+			attributes.put("<script>", script);
+		case "Text":
+			//Text태그 속성
+			//h1~h6은 같은 속성
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<ins>")||tagList[i].equals("<del>")) {
+					String[]tmp2={"cite","datetime"};
+					tmp=concat(tmp,tmp2);
+				}
+				else if(tagList[i].equals("<blockquote>")||tagList[i].equals("<q>")) {
+					String[]tmp2={"cite"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+		}
+	}
+	
+	String[]concat(String[]arr1,String[]arr2){
+		String[]tmp=new String[arr1.length+arr2.length];
+		int i=0;
+		for(int j=0;j<arr1.length;j++, i++) {
+			tmp[i]=arr1[j];
+		}
+		for(int j=0;j<arr2.length;j++, i++) {
+			tmp[i]=arr2[j];
+		}
+		Arrays.sort(tmp);
+		return tmp;
 	}
 }
 
@@ -287,6 +345,7 @@ class SelectAttributeDialog extends JDialog{
 	public SelectAttributeDialog(JFrame frame, String title, String[] list, HTMLModule module) {
 		super(frame,title, true);
 		setBounds(20,100,300,150);
+		module.attribute="";
 		
 		//속성 선택 리스트 패널
 		JPanel comboPanel=new JPanel();
@@ -348,6 +407,8 @@ class ContentDialog extends JDialog{
 	public ContentDialog(JFrame frame, String title, HTMLModule module) {
 		super(frame,title, true);
 		setBounds(20,100,300,150);
+		module.content="";
+		
 		//안내패널
 		JPanel labelPanel=new JPanel();
 		JLabel label=new JLabel("내용 입력");
@@ -364,6 +425,7 @@ class ContentDialog extends JDialog{
 		addButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				module.content=text.getText();
+				dispose();
 			}
 		});
 		cancelButton.addActionListener(new ActionListener() {
