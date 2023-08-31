@@ -156,7 +156,12 @@ public class HTMLModule {
 	class ToolActionListener implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			String type=e.getActionCommand();
-			new TagsDialog(application.frame,type,tags.get(type), module);
+			if(type.equals("Free")) {
+				new FreeDialog(application.frame, type, module);
+			}
+			else {
+				new TagsDialog(application.frame,type,tags.get(type), module);
+			}
 			//헤드 태그의 경우 위치 지정이 필요없으므로 바로 태그목록에 추가
 			if(type.equals("Head")) {
 				headTag.add(new TagObject(selectedTag, attribute, content));
@@ -172,7 +177,7 @@ public class HTMLModule {
 					,"<strong>","<mark>","<em>","<ins>","<del>","<s>","<u>","<sup>","<sub>","<small>","<br>","<hr>","<abbr>","<wbr>","<blockquote>","<q>"
 					,"<dfn>","<pre>","<var>","<samp>","<kbd>","<code>","<ruby>","<rp>","<rt>"};
 			tags.put("Text", Text);
-			String[]List= {"<ul>","<li>","<ol>","<dl>","<dt>","<dd>","<menu>"};
+			String[]List= {"<ul>","<li>","<ol>","<dl>","<dt>","<dd>"};
 			tags.put("List", List);
 			String[]LinkImage= {"<a>","<img>","<svg>","<progress>","<picture>"};
 			tags.put("Link/Image", LinkImage);
@@ -238,7 +243,18 @@ class TagObject{
 //태그 목록 대화상자를 정의함
 class TagsDialog extends JDialog{
 	//전역 속성
-	String[]Global= {"accesskey","class","contenteditable","data-*","dir","draggable","hidden","id","lang","spellcheck","style","tabindex","title","translate"};
+	String[]Global= {"","accesskey","class","contenteditable","data-*","dir","draggable","hidden","id","lang","spellcheck","style","tabindex","title","translate"};
+	String[]Event= {"",
+			"onafterprint","onbeforeprint","onbeforeunload","onerror","onhashchange","onload","onmessage","onoffline","ononline","onpagehide","onpageshow"
+			,"onpopstate","onresize","onstorage","onunload"
+			,"onblur","onchange","oncontextmenu","onfocus","oninput","oninvalid","onreset","onsearch","onselect","onsubmit"
+			,"onkeydown","onkeypress","onkeyup"
+			,"onclick","ondblclick","onmousedown","onmousemove","onmouseout","onmouseover","onmouseup","onwheel"
+			,"ondrag","ondragend","ondragenter","ondragleave","ondragover","ondragstart","ondrop","onscroll"
+			,"oncopy","oncut","onpaste"
+			,"onabort","oncanplay","oncanplaythrough","oncuechange","ondurationchange","onemptied","onended","onerror","onloadeddata","onloadedmetadata","onloadstart"
+			,"onpause","onplay","onplaying","onprogress","onratechange","onseeked","onseeking","onstalled","onsuspend","ontimeupdate","onvolumechange","onwaiting"
+			,"ontoggle"};
 	HashMap<String, String[]> attributes=new HashMap<String, String[]>();
 	
 	//대화상자를 만들고 해당하는 태그 목록만큼 버튼을 생성
@@ -249,7 +265,6 @@ class TagsDialog extends JDialog{
 		setLayout(new GridLayout(((length-5<=0)?1:length/5+1), 5));
 		setBounds(20,100,800,200);
 		makeAttributeMap(title, list);
-		title=title+"태그 목록";
 		//목록들에 대한 버튼을 만들고 액션리스너를 추가
 		JButton[]buttons=new JButton[list.length];
 		for(int i=0;i<length;i++) {
@@ -258,8 +273,13 @@ class TagsDialog extends JDialog{
 				public void actionPerformed(ActionEvent e) {
 					String tmp=e.getActionCommand();
 					module.selectedTag=tmp;
+					String[]tmpList= attributes.get(tmp);
+					if(!(title.equals("<svg>"))) {
+						tmpList=concat(Global,tmpList);
+					}
+					new SetTagDialog(frame, tmp.substring(1,tmp.length()-1), Global,Event,attributes.get(tmp),module);
 					//속성선택창 출력
-					new SelectAttributeDialog(frame, tmp+"속성 설정", concat(Global,attributes.get(tmp)), module);
+					//new SelectAttributeDialog(frame, tmp+"속성 설정", concat(Global,attributes.get(tmp)), module);
 					//취소가 선택되었다면 다시 태그선택
 					if(module.attribute.equals("cancel")) {
 						return;
@@ -288,13 +308,9 @@ class TagsDialog extends JDialog{
 		for(int i=0;i<tagList.length;i++) {
 			System.out.println(tagList[i]);
 		}
-		//이벤트 속성
-		String[]empty= {};
-		String[]Event= {"onafterprint","onbeforeprint","onbeforeunload","onerror","onhashchange","onload","onmessage","onoffline","ononline"
-				,"onpagehide","onpageshow","onpopstate","onresize","onstorage","onunload"};
 		switch(category) {
+		//헤드 관련 태그 속성
 		case "Head":
-			//헤드 태그 속성
 			String[]meta= {"charset","content","http-equiv","name"};
 			attributes.put("<meta>", meta);
 			String[]title= {};
@@ -307,25 +323,211 @@ class TagsDialog extends JDialog{
 			attributes.put("<style>", style);
 			String[]script={"async","crossorigin","defer","integrity","nomodule","referrerpolicy","src","type"};
 			attributes.put("<script>", script);
+		//글 관련 태그 속성
 		case "Text":
-			//Text태그 속성
-			//h1~h6은 같은 속성
 			for(int i=0;i<tagList.length;i++) {
 				String[] tmp= {};
 				if(tagList[i].equals("<ins>")||tagList[i].equals("<del>")) {
 					String[]tmp2={"cite","datetime"};
 					tmp=concat(tmp,tmp2);
 				}
-				else if(tagList[i].equals("<blockquote>")||tagList[i].equals("<q>")) {
+				if(tagList[i].equals("<blockquote>")||tagList[i].equals("<q>")) {
 					String[]tmp2={"cite"};
 					tmp=concat(tmp,tmp2);
 				}
 				tmp=concat(tmp,Event);
 				attributes.put(tagList[i], tmp);
 			}
+			break;
+		//리스트 관련 태그
+		case "List":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<li>")) {
+					String[]tmp2={"value"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<ol>")) {
+					String[]tmp2={"start","reversed","type"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//링크/이미지 관련 태그
+		case "Link/Image":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<a>")) {
+					String[]tmp2={"download","href","hreflang","media","ping","referrerpolicy","rel","target","type"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<img>")) {
+					String[]tmp2={"alt","crossorigin","height","ismap","loading","longdesc","referrerpolicy","sizes","src","srcset","usemap","width"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<progress>")) {
+					String[]tmp2={"max","value"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("svg")) {
+					continue;
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//테이블 관련 태그
+		case "Table":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<col>")||tagList[i].equals("<colgroup>")) {
+					String[]tmp2={"span"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<td>")) {
+					String[]tmp2={"colspan","headers","rowspan"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<th>")) {
+					String[]tmp2={"colspan","headers","rowspan","abbr","scope"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//형식 관련 태그
+		case "Form":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<button>")) {
+					String[]tmp2={"autofocus","disabled","form","formaction","formenctype","formmethod","formnovalidate","formtarget","name","type","value"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<fieldset>")) {
+					String[]tmp2={"disabled","form","name"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<form>")) {
+					String[]tmp2={"accept-charset","action","autocomplete","enctype","method","name","novalidate","rel","target"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<input>")) {
+					String[]tmp2={"accept","alt","autocomplete","autofocus","checked","dirname","disabled","form","formaction","formenctype",
+							"formmethod","formnovalidate","formtarget","height","list","max","maxlength","min","minlength","multiple","name",
+							"pattern","placeholder","readonly","required","size","src","step","type","value","width"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<label>")) {
+					String[]tmp2={"for","form"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<output>")) {
+					String[]tmp2={"for","form","name"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<select>")) {
+					String[]tmp2={"autofocus","disabled","form","multiple","name","required","size"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<textarea>")) {
+					String[]tmp2={"autofocus","cols","dirname","disabled","form","maxlength","name","placeholder","readonly","required","rows","wrap"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//멀티미디어 관련 태그
+		case "Multimedia":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<audio>")) {
+					String[]tmp2={"autoplay","controls","loop","muted","preload","src"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<canvas>")) {
+					String[]tmp2={"height","width"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<video>")) {
+					String[]tmp2={"autoplay","controls","height","loop","muted","poster","preload","src","width"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//임베디드 관련 태그
+		case "Embeded":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<embeded>")) {
+					String[]tmp2={"height","src","type","width"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<object>")) {
+					String[]tmp2={"data","form","height","name","type","typemustmatch","usemap","width"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//프레임 관련 태그
+		case "Frame":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<iframe>")) {
+					String[]tmp2={"allow","allowfullscreen","allowpaymentrequest","height","loading","name","referrerpolicy","sandbox","src","srcdoc","width"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//기타 태그
+		case "Other":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				if(tagList[i].equals("<base>")) {
+					String[]tmp2={"href","target"};
+					tmp=concat(tmp,tmp2);
+				}
+				if(tagList[i].equals("<script>")) {
+					String[]tmp2={"async","crossorigin","defer","integrity","nomodule","referrerpolicy","src","type"};
+					tmp=concat(tmp,tmp2);
+					attributes.put(tagList[i], tmp);
+					continue;
+				}
+				if(tagList[i].equals("<style>")) {
+					String[]tmp2={"media","type"};
+					tmp=concat(tmp,tmp2);
+				}
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//의미 관련 태그 속성
+		case "Semantic":
+			for(int i=0;i<tagList.length;i++) {
+				String[] tmp= {};
+				tmp=concat(tmp,Event);
+				attributes.put(tagList[i], tmp);
+			}
+			break;
+		//사용자가 자유롭게 입력
+		case "Free":
+			String[] tmp= {""};
+			attributes.put("<Free>", tmp);
+			break;
 		}
+		
 	}
 	
+	//문자열 배열 두 개를 받아 합친 다음 사전식으로 정렬하는 함수
 	String[]concat(String[]arr1,String[]arr2){
 		String[]tmp=new String[arr1.length+arr2.length];
 		int i=0;
@@ -337,6 +539,116 @@ class TagsDialog extends JDialog{
 		}
 		Arrays.sort(tmp);
 		return tmp;
+	}
+}
+
+class SetTagDialog extends JDialog{
+	static String[]empty={""};
+	public SetTagDialog(JFrame frame, String title, String[]Global, String[]Event, String[]list, HTMLModule module) {
+		super(frame,title, true);
+		setBounds(20,100,300,550);
+		module.attribute="";
+		module.content="";
+		
+		//안내패널
+		JPanel tagPanel=new JPanel();
+		JLabel tagLabel=new JLabel("<"+title+"></"+title+">");
+		tagPanel.add(tagLabel);
+		
+		//속성패널
+		JPanel attributePanel=new JPanel();
+		JPanel BoxPanel=new JPanel();
+		JLabel attributeLabel=new JLabel("속성과 값을 입력");
+		JLabel attributeTmp=new JLabel("");
+		JLabel selected=new JLabel("");
+		JComboBox<String>attributeGlobalBox=new JComboBox<String>(Global);
+		attributeGlobalBox.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+		JComboBox<String>attributeEventBox=new JComboBox<String>(Event);
+		attributeEventBox.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+		JComboBox<String>attributeBox=new JComboBox<String>(list);
+		attributeBox.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+		final JTextField attributeText=new JTextField("여기에 속성 값 입력");
+		attributeText.setSize(20, 10);
+		JButton addAttributeButton=new JButton("추가");
+		addAttributeButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				attributeTmp.setText(attributeTmp.getText()+" "+selected.getText()+"=\'"+attributeText.getText()+"\'");
+			}
+		});
+		
+		BoxPanel.add(attributeGlobalBox);
+		BoxPanel.add(attributeEventBox);
+		BoxPanel.add(attributeBox);
+		BoxPanel.setLayout(new GridLayout(3,1));
+		
+		attributePanel.add(attributeLabel);
+		attributePanel.add(BoxPanel);
+		attributePanel.add(attributeText);
+		attributePanel.add(addAttributeButton);
+		attributePanel.setLayout(new GridLayout(4,1));
+		
+		//내용패널
+		JPanel contentPanel=new JPanel();
+		JLabel contentLabel=new JLabel("태그 사이에 들어갈 내용 입력");
+		JLabel contentTmp=new JLabel("");
+		final JTextField content=new JTextField("여기에 내용 입력");
+		content.setSize(20, 10);
+		content.addKeyListener(new KeyListener() {
+			public void keyTyped(KeyEvent e) {}
+			public void keyPressed(KeyEvent e) {	
+				contentTmp.setText(content.getText());
+				tagLabel.setText("<"+title+attributeTmp.getText()+">"+contentTmp.getText()+"</"+title+">");
+			}
+			public void keyReleased(KeyEvent e) {}
+		});
+		contentPanel.setLayout(new GridLayout(2,1));
+		contentPanel.add(contentLabel);
+		contentPanel.add(content);
+		
+		//태그의 완성을 결정하는 패널
+		JPanel buttonPanel=new JPanel();
+		JButton addButton=new JButton("확인");
+		JButton cancelButton=new JButton("취소");
+		addButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				module.selectedTag=module.attribute=module.content="";
+				dispose();
+			}
+		});
+		cancelButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+			}
+		});
+		buttonPanel.add(addButton);
+		buttonPanel.add(cancelButton);
+		
+		GridBagLayout grid=new GridBagLayout();
+		GridBagConstraints c=new GridBagConstraints();
+		setLayout(grid);
+		c.fill=GridBagConstraints.BOTH;
+		c.gridy=1;
+		c.gridheight=1;
+		grid.setConstraints(tagPanel, c);
+		add(tagPanel);
+		c.fill=GridBagConstraints.BOTH;
+		c.gridy=2;
+		c.gridheight=1;
+		grid.setConstraints(attributePanel, c);
+		add(attributePanel);
+		c.fill=GridBagConstraints.BOTH;
+		c.gridy=3;
+		c.gridheight=1;
+		grid.setConstraints(contentPanel, c);
+		add(contentPanel);
+		c.fill=GridBagConstraints.BOTH;
+		c.gridy=4;
+		c.gridheight=1;
+		grid.setConstraints(buttonPanel, c);
+		add(buttonPanel);
+		
+		setVisible(true);
+		pack();
 	}
 }
 
@@ -441,6 +753,67 @@ class ContentDialog extends JDialog{
 		add(labelPanel, BorderLayout.NORTH);
 		add(text, BorderLayout.CENTER);
 		add(buttonPanel, BorderLayout.SOUTH);
+		
+		setVisible(true);
+		pack();
+	}
+}
+
+//내용 입력
+class FreeDialog extends JDialog{
+	public FreeDialog(JFrame frame, String title, HTMLModule module) {
+		super(frame,title, true);
+		setBounds(20,100,300,250);
+		module.attribute="";
+		module.content="";
+		
+		//안내패널
+		JPanel tagPanel=new JPanel();
+		JLabel tagLabel=new JLabel("사용할 태그를 입력(<>제외)");
+		final JTextField tag=new JTextField("여기에 태그 입력");
+		tag.setSize(20, 10);
+		tagPanel.add(tagLabel);
+		tagPanel.add(tag);
+		
+		//속성패널
+		JPanel attributePanel=new JPanel();
+		JLabel attributeLabel=new JLabel("속성과 값을 입력");
+		final JTextField attribute=new JTextField("ex)name='홍길동'");
+		attribute.setSize(20, 10);
+		attributePanel.add(attributeLabel);
+		attributePanel.add(attribute);
+		
+		//내용패널
+		JPanel contentPanel=new JPanel();
+		JLabel contentLabel=new JLabel("태그 사이에 들어갈 내용 입력");
+		final JTextField content=new JTextField("여기에 내용 입력");
+		content.setSize(20, 10);
+		contentPanel.add(contentLabel);
+		contentPanel.add(content);
+		
+		//실제 동작을 수행할 패널
+		JPanel buttonPanel=new JPanel();
+		JButton addButton=new JButton("확인");
+		JButton cancelButton=new JButton("취소");
+		addButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				module.selectedTag=module.attribute=module.content="";
+				dispose();
+			}
+		});
+		cancelButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+			}
+		});
+		buttonPanel.add(addButton);
+		buttonPanel.add(cancelButton);
+		
+		setLayout(new GridLayout(4,1));
+		add(tagPanel);
+		add(attributePanel);
+		add(contentPanel);
+		add(buttonPanel);
 		
 		setVisible(true);
 		pack();
