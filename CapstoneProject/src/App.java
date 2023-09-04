@@ -18,7 +18,6 @@ public class App extends JFrame {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		createMenu();
 		mainPanel=new JPanel();
-		mainPanel.setLayout(new BorderLayout());
 		frame.add(mainPanel);
 		frame.setVisible(true);
 		fileModule=null;

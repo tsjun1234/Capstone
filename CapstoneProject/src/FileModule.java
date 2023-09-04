@@ -180,7 +180,8 @@ public class FileModule{
 		//html모듈로부터 태그들을 받아와 위치에 각각 할당하여 저장함
 		String result;
 		String []arr=html.getHTMLTags();
-		result="<html><head>"+arr[0]+"</head><body>"+arr[1]+"</body></html>";
+		result="<html><head>"+arr[0]+"</head>"+arr[1]+"</html>";
+		System.out.println(result);
 		WriteFile(tmp[0], tmp[1], tmp[2], result);
 	}
 	
