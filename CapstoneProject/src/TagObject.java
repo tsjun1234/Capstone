@@ -9,7 +9,6 @@ class TagObject{
 	String tagOption;
 	String result;
 	String content;
-	boolean display;
 	TagObject Parent;
 	Vector<TagObject>childrens=new Vector<TagObject>();
 	//클래스 생성자
@@ -27,9 +26,11 @@ class TagObject{
 		this.height=height;
 		this.tagOption=tagOption;
 		this.content=content;
-		display=false;
 		checkAttribute();
-		setSize(e.x-s.x, e.y-s.y);
+		if(width==0&&height==0) {
+			setSize(e.x-s.x, e.y-s.y);
+		}
+		
 	}
 	//부모를 지정
 	void setParent(TagObject p) {
@@ -42,8 +43,6 @@ class TagObject{
 	}
 	//높이와 너비 설정
 	void setSize(int width, int height) {
-		if(display)
-			return;
 		this.width=width;
 		this.height=height;
 	}
@@ -61,6 +60,7 @@ class TagObject{
 	}
 	//클릭된 위치가 태그 안에 있는지 확인
 	TagObject checkLocation(int x, int y) {
+		System.out.println("현재 태그"+tag);
 		for(int i=0;i<childrens.size();i++) {
 			TagObject tmp=childrens.get(i).checkLocation(x, y);
 			if(tmp!=null)

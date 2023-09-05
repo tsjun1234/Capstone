@@ -12,6 +12,7 @@ public class HTMLModule {
 	String attribute="";
 	String content="";
 	int width, height;
+	CanvasPanel tmpPanel=null;
 	HashMap<String, String[]> tags=new HashMap<String,String[]>();
 	Vector<TagObject> headTag=new Vector<TagObject>();
 	Vector<TagObject> bodyTag=new Vector<TagObject>();
@@ -22,7 +23,6 @@ public class HTMLModule {
 	//새로 HTML파일을 작성하기위한 준비
 	public void makeNewHTML(JFrame frame, JPanel mainPanel) {
 		mainPanel.removeAll();
-		mainPanel.setLayout(new BorderLayout());
 		this.frame=frame;
 		this.mainPanel=mainPanel;
 		makeTagMap();
@@ -33,6 +33,7 @@ public class HTMLModule {
 	void createHTMLInterface() {
 		//화면을 도구창과 그림판으로 나눔
 		JToolBar tools=new JToolBar();
+		JPanel toolPanel=new JPanel();
 		JPanel objects=new CanvasPanel();
 		
 		//배경색을 설정함
@@ -50,14 +51,16 @@ public class HTMLModule {
 			toolsButtons[i].addActionListener(toolListener);
 			tools.add(toolsButtons[i]);
 		}
+		toolPanel.setLayout(new BorderLayout());
+		toolPanel.add(tools,"North");
 		
 		//그림판 설정
-		//JScrollPane scrollPane=new JScrollPane(objects, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		//scrollPane.setBounds(10,10,720,360);
+		JScrollPane scrollPane=new JScrollPane(objects, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		
-		mainPanel.add(tools,"North");
-		//mainPanel.add(scrollPane,"Center");
-		mainPanel.add(objects);
+		
+		mainPanel.setLayout(new BorderLayout());
+		mainPanel.add(toolPanel,"North");
+		mainPanel.add(scrollPane);
 		mainPanel.revalidate();
 		mainPanel.repaint();
 	}
@@ -87,10 +90,11 @@ public class HTMLModule {
 		Point End=null;
 		TagObject selectedObject;
 		public CanvasPanel() {
+			tmpPanel=this;
 			CanvasMouseListener mouseListener=new CanvasMouseListener();
 			Canvas.addMouseListener(mouseListener);
 			Canvas.addMouseMotionListener(mouseListener);
-			bodyTag.add(new TagObject("<body>", new Point(0,0), new Point(0,0), "", "", Canvas.getWidth(), Canvas.getHeight()));
+			bodyTag.add(new TagObject("<body>", new Point(0,0), new Point(0,0), "", "", mainPanel.getWidth(), mainPanel.getHeight()));
 			selectedObject=null;
 		}
 		
@@ -106,7 +110,11 @@ public class HTMLModule {
 				End=e.getPoint();
 				//태그가 선택되어있는 경우에만 bodyTag에 추가
 				if(selectedTag!="") {
-					bodyTag.add(new TagObject(selectedTag, Start, End, module.attribute, module.content, module.width, module.height));
+					//임시 태그 객체를 생성
+					TagObject tmpTag=new TagObject(selectedTag, Start, End, module.attribute, module.content, module.width, module.height);
+					//따로태그가 설정되어있지 않다면 자동으로 body태그를 부모태그로 추가
+					tmpTag.setParent(selectedObject);
+					bodyTag.add(tmpTag);
 				}
 				//현재까지의 bodyTag내용 출력(디버깅)
 				for(int i=0;i<bodyTag.size();i++) {
@@ -127,7 +135,6 @@ public class HTMLModule {
 			}
 			public void mouseClicked(MouseEvent e) {
 				Point tmp=e.getPoint();
-				System.out.println(bodyTag.get(0).width);
 				selectedObject=bodyTag.get(0).checkLocation(tmp.x, tmp.y);
 				System.out.println(selectedObject.tag);
 			}
@@ -148,8 +155,9 @@ public class HTMLModule {
 				}
 			}
 			if(selectedObject!=null) {
-				System.out.println(selectedObject.tag);
+				g.setColor(Color.red);
 				drawBox(selectedObject, g);
+				g.setColor(Color.black);
 			}
 			if(Start!=null&&End!=null) {
 				g.drawRect(Start.x, Start.y, End.x-Start.x, End.y-Start.y);
