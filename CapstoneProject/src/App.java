@@ -9,6 +9,7 @@ public class App extends JFrame {
 	JPanel mainPanel;
 	FileModule fileModule;
 	HTMLModule htmlModule;
+	SettingObject defaultSetting;
 	App application=this;
 	//메인 페이지 생성
 	public App() {
@@ -20,8 +21,9 @@ public class App extends JFrame {
 		mainPanel=new JPanel();
 		frame.add(mainPanel);
 		frame.setVisible(true);
-		fileModule=null;
+		fileModule=new FileModule(application);
 		htmlModule=null;
+		defaultSetting=new SettingObject(application);
 	}
 	
 	//프로그램상단의 메뉴바를 만드는 부분
@@ -42,15 +44,27 @@ public class App extends JFrame {
 		
 		//타입별로 서브메뉴 생성
 		//파일 메뉴
-		String [] tmp= {"새 파일", "파일 읽기", "파일 저장", "종료"};
-		JMenuItem[]tmps=new JMenuItem[tmp.length];
-		char[]tmps2= {'N', 'O', 'S', 'X'};
-		for(int i=0;i<tmp.length;i++) {
-			MenuItems.add(tmp[i]);
-			tmps[i]=new JMenuItem(tmp[i]);
+		String [] fileMenuItem= {"새 파일", "파일 읽기", "파일 저장", "종료"};
+		JMenuItem[]tmps=new JMenuItem[fileMenuItem.length];
+		char[]fileMenuAccel= {'N', 'O', 'S', 'X'};
+		for(int i=0;i<fileMenuItem.length;i++) {
+			MenuItems.add(fileMenuItem[i]);
+			tmps[i]=new JMenuItem(fileMenuItem[i]);
 			tmps[i].addActionListener(listener);
-			tmps[i].setAccelerator(KeyStroke.getKeyStroke(tmps2[i],Event.CTRL_MASK));
+			tmps[i].setAccelerator(KeyStroke.getKeyStroke(fileMenuAccel[i],Event.CTRL_MASK));
 			bars[0].add(tmps[i]);
+		}
+		
+		//HTML 메뉴
+		String [] HTMLMenuItem= {"HTML 기본설정"};
+		tmps=new JMenuItem[HTMLMenuItem.length];
+		char[]HTMLMenuAccel= {};
+		for(int i=0;i<HTMLMenuItem.length;i++) {
+			MenuItems.add(HTMLMenuItem[i]);
+			tmps[i]=new JMenuItem(HTMLMenuItem[i]);
+			tmps[i].addActionListener(listener);
+			//tmps[i].setAccelerator(KeyStroke.getKeyStroke(HTMLMenuAccel[i],Event.CTRL_MASK));
+			bars[1].add(tmps[i]);
 		}
 		
 		//메뉴바를 부착
@@ -58,7 +72,6 @@ public class App extends JFrame {
 	}
 	
 	void makeNewTask() {
-		fileModule=new FileModule(application);
 		htmlModule=new HTMLModule(application);
 	}
 	
@@ -91,6 +104,10 @@ public class App extends JFrame {
 			}
 			//작업을 종료할 때 사용하는 함수
 			if(type.equals(MenuItems.get(3))) {
+				
+			}
+			//HTML 기본 환경설정
+			if(type.equals(MenuItems.get(4))) {
 				
 			}
 		}

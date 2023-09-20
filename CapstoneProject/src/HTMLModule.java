@@ -12,12 +12,12 @@ public class HTMLModule {
 	String attribute="";
 	String content="";
 	int width, height;
-	CanvasPanel tmpPanel=null;
-	HashMap<String, String[]> tags=new HashMap<String,String[]>();
+	HashMap<String, String[]> HTMLSettings;
 	Vector<TagObject> headTag=new Vector<TagObject>();
 	Vector<TagObject> bodyTag=new Vector<TagObject>();
 	public HTMLModule(App app) {
 		application=app;
+		HTMLSettings=app.defaultSetting.HTMLSetting;
 	}
 	
 	//새로 HTML파일을 작성하기위한 준비
@@ -25,7 +25,6 @@ public class HTMLModule {
 		mainPanel.removeAll();
 		this.frame=frame;
 		this.mainPanel=mainPanel;
-		makeTagMap();
 		createHTMLInterface();
 	}
 	
@@ -42,7 +41,7 @@ public class HTMLModule {
 		
 		//도구창설정
 		tools.setFloatable(false);
-		String [] toolsLabel= {"Head","Text","List","Link/Image","Table","Form","Multimedia","Embeded","Frame","Other","Semantic","Free"};
+		String [] toolsLabel= HTMLSettings.get("Tag Category");
 		JButton[] toolsButtons=new JButton[toolsLabel.length];
 		tools.setLayout(new GridLayout(1, toolsLabel.length, 0, 0));
 		ToolActionListener toolListener=new ToolActionListener();
@@ -70,19 +69,6 @@ public class HTMLModule {
 		String []tmp=fileModule.LoadFile();
 	}
 	
-	//현재까지의 태그들을 파일에 저장함
-	public String[] getHTMLTags() {
-		String []tmp=new String[2];
-		tmp[0]=tmp[1]="";
-		for(int i=0;i<headTag.size();i++) {
-			tmp[0]=tmp[0]+headTag.get(i).getTag();
-		}
-		for(int i=0;i<bodyTag.size();i++) {
-			tmp[1]=tmp[1]+bodyTag.get(i).getTag();
-		}
-		return tmp;
-	}
-	
 	//캔버스 역할을 할 패널
 	class CanvasPanel extends JPanel{
 		CanvasPanel Canvas=this;
@@ -90,7 +76,6 @@ public class HTMLModule {
 		Point End=null;
 		TagObject selectedObject;
 		public CanvasPanel() {
-			tmpPanel=this;
 			CanvasMouseListener mouseListener=new CanvasMouseListener();
 			Canvas.addMouseListener(mouseListener);
 			Canvas.addMouseMotionListener(mouseListener);
@@ -110,9 +95,14 @@ public class HTMLModule {
 				End=e.getPoint();
 				//태그가 선택되어있는 경우에만 bodyTag에 추가
 				if(selectedTag!="") {
+					System.out.println("클릭"+Start.x+" "+Start.y);
 					//임시 태그 객체를 생성
 					TagObject tmpTag=new TagObject(selectedTag, Start, End, module.attribute, module.content, module.width, module.height);
 					//따로태그가 설정되어있지 않다면 자동으로 body태그를 부모태그로 추가
+					if(selectedObject==null) {
+						selectedObject=bodyTag.get(0);
+					}
+					System.out.println(tmpTag.tag);
 					tmpTag.setParent(selectedObject);
 					bodyTag.add(tmpTag);
 				}
@@ -137,6 +127,8 @@ public class HTMLModule {
 				Point tmp=e.getPoint();
 				selectedObject=bodyTag.get(0).checkLocation(tmp.x, tmp.y);
 				System.out.println(selectedObject.tag);
+				System.out.println(selectedObject.x);
+				System.out.println(selectedObject.y);
 			}
 			public void mouseEntered(MouseEvent e) {}
 			public void mouseExited(MouseEvent e) {}
@@ -173,7 +165,7 @@ public class HTMLModule {
 				new FreeDialog(application.frame, type, module);
 			}
 			else {
-				new TagsDialog(application.frame,type,tags.get(type), module);
+				new TagsDialog(application.frame,type,HTMLSettings.get(type), module);
 			}
 			//헤드 태그의 경우 위치 지정이 필요없으므로 바로 태그목록에 추가
 			if(type.equals("Head")) {
@@ -182,57 +174,34 @@ public class HTMLModule {
 		}
 	}
 	
-	//태그 사전을 만드는 함수
-	void makeTagMap() {
-			String[]Head= {"<meta>","<title>","<link>","<style>","<script>"};
-			tags.put("Head", Head);
-			String[]Text= {"<h1>","<h2>","<h3>","<h4>","<h5>","<h6>","<p>","<b>","<i>"
-					,"<strong>","<mark>","<em>","<ins>","<del>","<s>","<u>","<sup>","<sub>","<small>","<br>","<hr>","<abbr>","<wbr>","<blockquote>","<q>"
-					,"<dfn>","<pre>","<var>","<samp>","<kbd>","<code>","<ruby>","<rp>","<rt>"};
-			tags.put("Text", Text);
-			String[]List= {"<ul>","<li>","<ol>","<dl>","<dt>","<dd>"};
-			tags.put("List", List);
-			String[]LinkImage= {"<a>","<img>","<svg>","<progress>","<picture>"};
-			tags.put("Link/Image", LinkImage);
-			String[]Table= {"<table>","<tr>","<td>","<th>","<caption>","<colgroup>","<col>","<thead>","<tbody>","<tfoot>"};
-			tags.put("Table",Table);
-			String[]Form= {"<form>","<input>","<textarea>","<button>","<output>","<datalist>","<select>","<fieldset>","<label>"};
-			tags.put("Form", Form);
-			String[]Multimedia= {"<video>","<audio>","<canvas>"};
-			tags.put("Multimedia", Multimedia);
-			String[]Embeded= {"<object>","<embeded>"};
-			tags.put("Embeded", Embeded);
-			String[]Frame= {"<iframe>"};
-			tags.put("Frame", Frame);
-			String[]Other= {"<base>","<style>","<script>","<div>","<span>","<figure>","<figcaption>"};
-			tags.put("Other", Other);
-			String[]Semantic= {"<header>","<nav>","<main>","<article>","<section>","<aside>","<footer>",};
-			tags.put("Semantic", Semantic);
-			String[]Free= {};
-			tags.put("Free", Free);
-			Set<String> keys=tags.keySet();
-			Iterator<String> it=keys.iterator();
-			while(it.hasNext()) {
-				String key=it.next();
-				Arrays.sort(tags.get(key));
-			}
-	}
-	
 	void drawTag(TagObject t, Graphics g) {
-		for(int i=0;i<tags.get("Text").length;i++) {
-			if(tags.get("Text")[i].equals(t.tag)) {
-				drawText(t,g);
-				return;
-			}
+		if(t.content!="") {
+			drawText(t,g);
+			return;
 		}
 		drawBox(t,g);
 	}
 	void drawText(TagObject t, Graphics g) {
-		g.drawString(t.content, t.x, t.y);
+		FontMetrics fm=g.getFontMetrics();
+		g.drawString(t.content, t.x, t.y+t.height-fm.getLeading()-fm.getDescent());
 	}
+	
 	void drawBox(TagObject t, Graphics g) {
 		g.drawRect(t.x,t.y,t.width,t.height);
 	}
+	
+	//현재까지의 태그들을 파일에 저장함
+		public String[] getHTMLTags() {
+			String []tmp=new String[2];
+			tmp[0]=tmp[1]="";
+			for(int i=0;i<headTag.size();i++) {
+				tmp[0]=tmp[0]+headTag.get(i).getTag();
+			}
+			for(int i=0;i<bodyTag.size();i++) {
+				tmp[1]=tmp[1]+bodyTag.get(i).getTag();
+			}
+			return tmp;
+		}
 }
 
 

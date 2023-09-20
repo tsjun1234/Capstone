@@ -1,7 +1,4 @@
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -27,6 +24,7 @@ class SetTagDialog extends JDialog{
 		module.content="";
 		module.width=0;
 		module.height=0;
+		Container c=getContentPane();
 		
 		//안내패널 변수
 		JPanel tagPanel=new JPanel();
@@ -152,30 +150,27 @@ class SetTagDialog extends JDialog{
 		buttonPanel.add(addButton);
 		buttonPanel.add(cancelButton);
 		
-		//전체 구도 설정
-		GridBagLayout grid=new GridBagLayout();
-		GridBagConstraints c=new GridBagConstraints();
-		setLayout(grid);
-		c.fill=GridBagConstraints.BOTH;
-		c.gridy=1;
-		c.gridheight=1;
-		grid.setConstraints(tagPanel, c);
+		//전체 구도 설정;
+		setLayout(null);
+		tagPanel.setBounds(10, 10, 260, 20);
+		attributePanel.setBounds(10, 30, 260, 200);
+		contentPanel.setBounds(10, 230, 260, 100);
+		buttonPanel.setBounds(10, 330, 260, 35);
 		add(tagPanel);
-		c.fill=GridBagConstraints.BOTH;
-		c.gridy=2;
-		c.gridheight=1;
-		grid.setConstraints(attributePanel, c);
 		add(attributePanel);
-		c.fill=GridBagConstraints.BOTH;
-		c.gridy=3;
-		c.gridheight=1;
-		grid.setConstraints(contentPanel, c);
 		add(contentPanel);
-		c.fill=GridBagConstraints.BOTH;
-		c.gridy=4;
-		c.gridheight=1;
-		grid.setConstraints(buttonPanel, c);
 		add(buttonPanel);
+		/*
+		 * GridBagLayout grid=new GridBagLayout(); GridBagConstraints c=new
+		 * GridBagConstraints(); setLayout(grid); c.fill=GridBagConstraints.VERTICAL;
+		 * c.gridy=1; c.gridheight=1; grid.setConstraints(tagPanel, c); add(tagPanel);
+		 * c.fill=GridBagConstraints.VERTICAL; c.gridy=2; c.gridheight=1;
+		 * grid.setConstraints(attributePanel, c); add(attributePanel);
+		 * c.fill=GridBagConstraints.VERTICAL; c.gridy=3; c.gridheight=1;
+		 * grid.setConstraints(contentPanel, c); add(contentPanel);
+		 * c.fill=GridBagConstraints.VERTICAL; c.gridy=4; c.gridheight=1;
+		 * grid.setConstraints(buttonPanel, c); add(buttonPanel);
+		 */
 		
 		setVisible(true);
 		pack();

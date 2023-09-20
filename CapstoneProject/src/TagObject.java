@@ -27,7 +27,7 @@ class TagObject{
 		this.tagOption=tagOption;
 		this.content=content;
 		checkAttribute();
-		if(width==0&&height==0) {
+		if((width==0&&height==0)) {
 			setSize(e.x-s.x, e.y-s.y);
 		}
 		
@@ -60,14 +60,14 @@ class TagObject{
 	}
 	//클릭된 위치가 태그 안에 있는지 확인
 	TagObject checkLocation(int x, int y) {
-		System.out.println("현재 태그"+tag);
 		for(int i=0;i<childrens.size();i++) {
 			TagObject tmp=childrens.get(i).checkLocation(x, y);
 			if(tmp!=null)
 				return tmp;
 		}
-		if((x>this.x)&&(x<this.x+width)&&(y>this.y)&&(y<this.y+height))
+		if((x>this.x)&&(x<this.x+width)&&(y>this.y)&&(y<this.y+height)) {
 			return this;
+		}
 		return null;
 	}
 	//클래스에 저장되어 있는 태그값을 기초로 값을 반환함

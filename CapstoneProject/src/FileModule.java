@@ -84,7 +84,7 @@ public class FileModule{
 		case"html":
 			//html은 크게 head와 body로 구성되어있음
 			String []result=new String[2];
-			String tmp2=ReadFile(tmp[0],tmp[1]);
+			String tmp2=ReadFile(tmp[0]+"\\"+tmp[1]);
 			System.out.println(tmp2);
 			//파일읽기에서 오류가 발생했을 때
 			if(tmp2.equals("null")) {
@@ -205,18 +205,14 @@ public class FileModule{
 		}
 	}
 	
-	//사용자로부터 주소와 확장자, 내용을 받아서 해당 위치의 파일을 읽음
-	//입력
-	//dest:읽기 목적지
-	//name:파일 이름
-	//ext:확장자
-	//출력
-	//읽은 값을 반환
-	String ReadFile(String dest, String name) {
+	//사용자로부터 주소를 받아해당 위치의 파일을 읽음
+	//dest:주소
+	//result:읽은 값
+	String ReadFile(String dest) {
 		FileReader fin=null;
 		String result="";
 		try {
-			fin=new FileReader(dest+"\\"+name);
+			fin=new FileReader(dest);
 			int c;
 			while((c=fin.read())!=-1) {
 				result=result+(char)c;
