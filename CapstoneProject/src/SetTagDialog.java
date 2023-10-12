@@ -7,12 +7,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 //속성과 내용의 값을 입력받는 대화상자
@@ -33,6 +35,8 @@ class SetTagDialog extends JDialog{
 		//속성패널 변수
 		JPanel attributePanel=new JPanel();
 		JPanel BoxPanel=new JPanel();
+		JPanel RadioPanel=new JPanel();
+		JPanel RadioGroup=new JPanel();
 		JLabel attributeLabel=new JLabel("속성과 값을 입력");
 		JLabel attributeTmp=new JLabel("");
 		JLabel selected=new JLabel("");
@@ -40,6 +44,14 @@ class SetTagDialog extends JDialog{
 		boxList[0]=new JLabel("글로벌 속성");
 		boxList[1]=new JLabel("이벤트 속성");
 		boxList[2]=new JLabel("태그 전용 속성");
+		JLabel Radio=new JLabel("position 속성 선택");
+		JRadioButton []RadioButton=new JRadioButton[5];
+		RadioButton[0]=new JRadioButton("static");
+		RadioButton[1]=new JRadioButton("relative");
+		RadioButton[2]=new JRadioButton("absolute");
+		RadioButton[3]=new JRadioButton("fixed");
+		RadioButton[4]=new JRadioButton("sticky");
+		ButtonGroup RadioButtons=new ButtonGroup();
 		JComboBox<String>attributeGlobalBox=new JComboBox<String>(Global);
 		JComboBox<String>attributeEventBox=new JComboBox<String>(Event);
 		JComboBox<String>attributeBox=new JComboBox<String>(list);
@@ -104,11 +116,22 @@ class SetTagDialog extends JDialog{
 		BoxPanel.add(attributeBox);
 		BoxPanel.setLayout(new GridLayout(3,2));
 		
+		RadioPanel.add(Radio);
+		RadioPanel.add(RadioGroup);
+		for(int i=0;i<5;i++) {
+			RadioButtons.add(RadioButton[i]);
+			RadioGroup.add(RadioButton[i]);
+		}
+		RadioButton[0].setSelected(true);
+		RadioPanel.setLayout(new GridLayout(2,1));
+		RadioGroup.setLayout(new GridLayout(2,3));
+		
 		attributePanel.add(attributeLabel);
 		attributePanel.add(BoxPanel);
+		attributePanel.add(RadioPanel);
 		attributePanel.add(attributeText);
 		attributePanel.add(addAttributeButton);
-		attributePanel.setLayout(new GridLayout(4,1));
+		attributePanel.setLayout(new GridLayout(5,1));
 		
 		//내용패널 설정
 		content.setSize(20, 10);
@@ -135,7 +158,12 @@ class SetTagDialog extends JDialog{
 		//확인취소패널 설정
 		addButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				module.attribute=attributeTmp.getText();
+				for(int i=0;i<5;i++) {
+					if(RadioButton[i].isSelected()) {
+						module.attribute=" style='position:"+RadioButton[i].getText()+";' "+attributeTmp.getText();
+						break;
+					}
+				}
 				module.content=contentTmp.getText();
 				module.width=preview.getWidth();
 				module.height=preview.getHeight();
@@ -153,9 +181,9 @@ class SetTagDialog extends JDialog{
 		//전체 구도 설정;
 		setLayout(null);
 		tagPanel.setBounds(10, 10, 260, 20);
-		attributePanel.setBounds(10, 30, 260, 200);
-		contentPanel.setBounds(10, 230, 260, 100);
-		buttonPanel.setBounds(10, 330, 260, 35);
+		attributePanel.setBounds(10, 30, 260, 250);
+		contentPanel.setBounds(10, 280, 260, 100);
+		buttonPanel.setBounds(10, 380, 260, 35);
 		add(tagPanel);
 		add(attributePanel);
 		add(contentPanel);
