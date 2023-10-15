@@ -2,22 +2,23 @@ import java.awt.Point;
 import java.util.Vector;
 
 //파일에 저장될 태그를 클래스화
+//<div id='12' sytle='position:absolute;'>예시</div>
+//<태그이름 속성값>내용</태그이름>
+//화면상에 보여지는 것은 body태그와 상속관계
+//태그의 크기와 위치 중요
 class TagObject{
 	String tag;
 	int x, y;
 	int width, height;
 	String tagOption;
-	String result;
 	String content;
 	TagObject Parent;
 	Vector<TagObject>childrens=new Vector<TagObject>();
-	//클래스 생성자
-	TagObject(){
-		this("<body>","","");
-	}
+	//head태그 생성자
 	TagObject(String tag, String tagOption, String content){
 		this(tag, new Point(0,0), new Point(0,0), tagOption, content, 0, 0);
 	}
+	//body태그 생성자
 	TagObject(String tag, Point s, Point e, String tagOption, String content, int width, int height){
 		this.tag=tag;
 		this.x=s.x;
@@ -29,26 +30,13 @@ class TagObject{
 		if((width==0&&height==0)) {
 			setSize(e.x-s.x, e.y-s.y);
 		}
+		System.out.println(checkAttribute("style"));
 		if(!checkAttribute("style").equals("")) {
 			String style=checkPosition(checkAttribute("style"));
 			System.out.println(style);
 			//this.tagOption=" style='"+style+"' "+tagOption;
 			modifyAttribute("style",style);
 		}
-	}
-	//부모를 지정
-	void setParent(TagObject p) {
-		Parent=p;
-		p.addChild(this);
-	}
-	//자식 목록에 추가
-	void addChild(TagObject c) {
-		childrens.add(c);
-	}
-	//높이와 너비 설정
-	void setSize(int width, int height) {
-		this.width=width;
-		this.height=height;
 	}
 	//position이 absolute면 절대위치에 해당하는 값으로 설정된 style값 반환 아니라면 위치를 조정
 	String checkPosition(String style) {
@@ -78,23 +66,37 @@ class TagObject{
 		}
 		return "";
 	}
+	//부모를 지정
+	void setParent(TagObject p) {
+		Parent=p;
+		p.addChild(this);
+	}
+	//자식 목록에 추가
+	void addChild(TagObject c) {
+		childrens.add(c);
+	}
+	//높이와 너비 설정
+	void setSize(int width, int height) {
+		this.width=width;
+		this.height=height;
+	}
 	//속성목록에서 찾고자 하는 속성을 찾아 원하는 값으로 수정
-		void modifyAttribute(String name, String attr) {
-			String[]tmp=tagOption.split(" ");
-			String tmpOption="";
-			for(int i=0;i<tmp.length;i++) {
-				if(tmp[i].indexOf('=')!=-1) {
-					String attribute=tmp[i].substring(0,tmp[i].indexOf('='));
-					if(name.equals(attribute)) {
-						tmpOption+=" "+name+"='"+attr+"'";
-					}
-					else {
-						tmpOption+=tmp[i];
-					}
+	void modifyAttribute(String name, String attr) {
+		String[]tmp=tagOption.split(" ");
+		String tmpOption="";
+		for(int i=0;i<tmp.length;i++) {
+			if(tmp[i].indexOf('=')!=-1) {
+				String attribute=tmp[i].substring(0,tmp[i].indexOf('='));
+				if(name.equals(attribute)) {
+					tmpOption+=" "+name+"='"+attr+"'";
+				}
+				else {
+					tmpOption+=" "+tmp[i];
 				}
 			}
-			tagOption=tmpOption;
 		}
+		tagOption=tmpOption;
+	}
 	//클릭된 위치가 태그 안에 있는지 확인
 	TagObject checkLocation(int x, int y) {
 		for(int i=0;i<childrens.size();i++) {

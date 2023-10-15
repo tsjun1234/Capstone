@@ -26,11 +26,10 @@ class SetTagDialog extends JDialog{
 		module.content="";
 		module.width=0;
 		module.height=0;
-		Container c=getContentPane();
 		
 		//안내패널 변수
 		JPanel tagPanel=new JPanel();
-		JLabel tagLabel=new JLabel("<"+title+"></"+title+">");
+		JLabel tagLabel=new JLabel("<"+title+" style='position:static; '></"+title+">");
 		
 		//속성패널 변수
 		JPanel attributePanel=new JPanel();
@@ -38,7 +37,7 @@ class SetTagDialog extends JDialog{
 		JPanel RadioPanel=new JPanel();
 		JPanel RadioGroup=new JPanel();
 		JLabel attributeLabel=new JLabel("속성과 값을 입력");
-		JLabel attributeTmp=new JLabel("");
+		JLabel attributeTmp=new JLabel(" style='position:static;'");
 		JLabel selected=new JLabel("");
 		JLabel []boxList=new JLabel[3];
 		boxList[0]=new JLabel("글로벌 속성");
@@ -103,7 +102,37 @@ class SetTagDialog extends JDialog{
 		JButton addAttributeButton=new JButton("추가");
 		addAttributeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				attributeTmp.setText(attributeTmp.getText()+" "+selected.getText()+"=\'"+attributeText.getText()+"\'");
+				//속성값을 추가하기전 중복과 position의 관한 처리
+				String tmp=attributeText.getText();
+				String Selected=selected.getText();
+				String result="";
+				//중복된 속성값이 추가된다면 마지막 입력으로 수정
+				String[]oldAttributes=attributeTmp.getText().split(" ");
+				System.out.println(oldAttributes.length);
+				for(int i=1;i<oldAttributes.length;i++) {
+					if(!oldAttributes[i].substring(0,oldAttributes[i].indexOf("=")).equals(Selected)) {
+						result+=" "+oldAttributes[i];	
+					}
+				}
+				result+=" "+Selected+"='"+tmp+"'";
+				//사용자가 position을 style을 통해 직접 설정할 경우 수정 
+				if(Selected.equals("style")) {
+					String []values=tmp.split(";");
+					for(int i=0;i<values.length;i++) {
+						if(values[i].substring(0,values[i].indexOf(":")).equals("position")) {
+							for(int j=0;j<5;j++) {
+								if(RadioButton[i].getText().equals(values[i].substring(values[i].indexOf(":")+1))) {
+									RadioButton[i].setSelected(true);
+								}
+								else {
+									RadioButton[i].setSelected(false);
+								}
+							}
+							break;
+						}
+					}
+				}
+				attributeTmp.setText(result);
 				tagLabel.setText("<"+title+attributeTmp.getText()+">"+contentTmp.getText()+"</"+title+">");
 			}
 		});
@@ -118,9 +147,31 @@ class SetTagDialog extends JDialog{
 		
 		RadioPanel.add(Radio);
 		RadioPanel.add(RadioGroup);
+		//라디오 버튼으로 position 선택시 운본 속성값을 유지하면서 position값만 변경
 		for(int i=0;i<5;i++) {
 			RadioButtons.add(RadioButton[i]);
 			RadioGroup.add(RadioButton[i]);
+			RadioButton[i].addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {
+					String result="";
+					String[]oldAttributes=attributeTmp.getText().split(" ");
+					for(int i=0;i<5;i++) {
+						if(RadioButton[i].isSelected()) {
+							for(int j=1;j<oldAttributes.length;j++) {
+								if(!oldAttributes[j].substring(0,oldAttributes[j].indexOf("=")).equals("style")) {
+									result+=" "+oldAttributes[j];
+								}
+								else {
+									result+=" "+oldAttributes[j].substring(0,oldAttributes[j].indexOf(":")+1)+RadioButton[i].getText()+";'";
+								}
+							}
+							attributeTmp.setText(result);
+							tagLabel.setText("<"+title+attributeTmp.getText()+">"+contentTmp.getText()+"</"+title+">");
+							break;
+						}
+					}
+				}
+			});
 		}
 		RadioButton[0].setSelected(true);
 		RadioPanel.setLayout(new GridLayout(2,1));
@@ -158,12 +209,7 @@ class SetTagDialog extends JDialog{
 		//확인취소패널 설정
 		addButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				for(int i=0;i<5;i++) {
-					if(RadioButton[i].isSelected()) {
-						module.attribute=" style='position:"+RadioButton[i].getText()+";' "+attributeTmp.getText();
-						break;
-					}
-				}
+				module.attribute=attributeTmp.getText();
 				module.content=contentTmp.getText();
 				module.width=preview.getWidth();
 				module.height=preview.getHeight();

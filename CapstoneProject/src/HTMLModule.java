@@ -102,7 +102,7 @@ public class HTMLModule {
 					if(selectedObject==null) {
 						selectedObject=bodyTag.get(0);
 					}
-					System.out.println(tmpTag.tag);
+					System.out.println(selectedObject.tag);
 					tmpTag.setParent(selectedObject);
 					bodyTag.add(tmpTag);
 				}
@@ -156,7 +156,6 @@ public class HTMLModule {
 			}
 		}
 	}
-	
 	//태그 종류를 선택했을 시 해당 종류에 맞는 대화상자를 생성하는 리스너
 	class ToolActionListener implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
@@ -173,7 +172,7 @@ public class HTMLModule {
 			}
 		}
 	}
-	
+	//태그를 그래픽화
 	void drawTag(TagObject t, Graphics g) {
 		if(t.content!="") {
 			drawText(t,g);
@@ -189,9 +188,9 @@ public class HTMLModule {
 	void drawBox(TagObject t, Graphics g) {
 		g.drawRect(t.x,t.y,t.width,t.height);
 	}
-	
 	//현재까지의 태그들을 파일에 저장함
 		public String[] getHTMLTags() {
+			//head와 body태그를 구분하ㅕㅇ 저장
 			String []tmp=new String[2];
 			tmp[0]=tmp[1]="";
 			for(int i=0;i<headTag.size();i++) {

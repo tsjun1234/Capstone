@@ -5,11 +5,12 @@ public class app_main {
 	}
 }
 
-//TODO(10/12)
+//TODO(10/15)
 //현재 작업중
 //태그 생성시 position을 선택(기본 static)
-//다만 사용자가 style태그를 따로 추가시 해당 속성값까지 포현해 값을 다시 조정해야함
-//setTagDialog에서 style태그에 대한것만 따로 조치를 취해야할듯
+//setTagDialog에서 중복된 속성값 추가시 기존값을 대체
+//실제 position을 적용해야함, 부모의 위치를 기준으로 absolute를 제외한 위치를 설정해야함
+//checkPosition함수를 경우의 수에 따라 분리하면될듯
 //해결해야하는것
 //태그를 그래픽화, 선택한 태그를 기준으로 추가하는 방안(일부 구현)
 //1.파일 모듈
